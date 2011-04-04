@@ -11,4 +11,4 @@ console.log(__dirname + '/' + process.argv[2])
 
 var buffer = readFileSync(__dirname + '/' + process.argv[2]);
 
-storage().put('test', {binaryBuffer: buffer})
+storage().put(process.argv[2], {binaryBuffer: buffer})
