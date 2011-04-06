@@ -29,15 +29,19 @@ function SyncVideo(in_url) {
         if (/\[download\] Destination: /gim.test(chunk)) {
             filename = chunk.slice(24);
         }
+        
+        console.log(chunk);
     });
     
     sync.on('exit', function downloadingComplete() {
-        var data = readFileSync(__dirname + '/' + filename);
+        setTimeout(function startSyncing() { 
+            var data = readFileSync(__dirname + '/' + filename);
         
-        storage().put(filename, data).
+            storage().put(filename, {binaryBuffer: data}).
         
-        on('success', function() { 
-            console.log(filename, 'stored on S3');
-        })
+            on('success', function() { 
+                console.log(filename, 'stored on S3');
+            });
+        }, 2000);            
     });
 }
