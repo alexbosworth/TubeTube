@@ -1,5 +1,8 @@
 var readFileSync = require('fs').readFileSync,
     KEYS = require('./config/keys'),
+    httpGet = require('http').get,
+    parseUrl = require('url').parse,
+    spawnChildProcess = require('child_process').spawn;
     S3 = require('./Node-S3/amazon-s3').S3;
 
 function storage() {
@@ -7,8 +10,22 @@ function storage() {
         {acl: 'public-read', defaultBucket: KEYS.S3_BUCKET });
 };
 
-console.log(__dirname + '/' + process.argv[2])
+new SyncVideo(process.argv[2]);
 
-var buffer = readFileSync(__dirname + '/' + process.argv[2]);
-
-storage().put(process.argv[2], {binaryBuffer: buffer})
+function SyncVideo(in_url) {
+    var timestamp = new Date().getTime();
+    
+    var args = [
+        '-o',
+        timestamp,
+        in_url
+    ];
+    
+    var sync = spawnChildProcess(__dirname + '/youtube-dl/youtube-dl', [in_url]);
+    
+    sync.on('exit', function(r) { 
+        var buffer = readFileSync(__dirname + '/' + timestamp);
+        
+        storage().put(timestamp, {binaryBuffer: buffer});
+    });
+}
