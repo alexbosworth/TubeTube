@@ -8,24 +8,36 @@ var readFileSync = require('fs').readFileSync,
 function storage() {
     return new S3(KEYS.AWS_KEY, KEYS.AWS_PASS, 
         {acl: 'public-read', defaultBucket: KEYS.S3_BUCKET });
-};
+}
 
 new SyncVideo(process.argv[2]);
 
 function SyncVideo(in_url) {
-    var timestamp = new Date().getTime();
-    
     var args = [
-        '-o',
-        timestamp,
+        '-f',
+        '22',
         in_url
     ];
     
+    var filename = null;
+    
     var sync = spawnChildProcess(__dirname + '/youtube-dl/youtube-dl', [in_url]);
     
-    sync.on('exit', function(r) { 
-        var buffer = readFileSync(__dirname + '/' + timestamp);
+    sync.stdout.on('data', function downloadingCbk(chunk) { 
+        chunk = chunk+'';
         
-        storage().put(timestamp, {binaryBuffer: buffer});
+        if (/\[download\] Destination: /gim.test(chunk)) {
+            filename = chunk.slice(24);
+        }
+    });
+    
+    sync.on('exit', function downloadingComplete() {
+        var data = readFileSync(__dirname + '/' + filename);
+        
+        storage().put(filename, data).
+        
+        on('success', function() { 
+            console.log(filename, 'stored on S3');
+        })
     });
 }
