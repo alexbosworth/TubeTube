@@ -7,6 +7,7 @@ var readFile = require('fs').readFile,
     KEYS = require('./config/keys'),
     httpGet = require('http').get,
     parseUrl = require('url').parse,
+    createReadStream = require('fs').createReadStream,
     spawnChildProcess = require('child_process').spawn;
     storage = require('./Node-S3/aws-s3').init(KEYS.AWS_KEY, KEYS.AWS_PASS, KEYS.S3_BUCKET);
 
@@ -39,15 +40,13 @@ function SyncVideo(in_url) {
         });
                 
         if (!filename) return console.log("NO VIDEO FOUND");
-                
-        readFile(__dirname + '/' + filename, 
         
-        function fileArrived(err, data) {
-            storage().put(filename, data, {acl: 'public-read', binaryBuffer: true}).
-
-            success(function() { 
-                console.log(filename, 'STORED ON S3');
-            });            
+        var stream = createReadStream(__dirname + '/' + filename);
+        
+        storage().put(filename, stream, {readStream: true, acl: 'public-read'}).
+        
+        success(function storageResponse() {
+            console.log(filename, 'stored on s3.');
         });
     });
 }
