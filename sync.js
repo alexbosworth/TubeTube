@@ -19,7 +19,7 @@ function SyncVideo(in_url) {
         '-f',
         '18',
         '-o',
-        '%(stitle)s-%(id)s.%(ext)s'
+        '%(stitle)s-%(id)s.%(ext)s',
         in_url
     ];
     
