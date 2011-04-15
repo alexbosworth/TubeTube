@@ -17,7 +17,7 @@ new SyncVideo(process.argv[2]);
 function SyncVideo(in_url) {
     var args = [
         '-f',
-        '18',
+        '22',
         '-o',
         '%(stitle)s-%(id)s.%(ext)s',
         in_url
