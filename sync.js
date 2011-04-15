@@ -8,6 +8,7 @@ var readFile = require('fs').readFile,
     httpGet = require('http').get,
     parseUrl = require('url').parse,
     createReadStream = require('fs').createReadStream,
+    unlinkFile = require('fs').unlink,
     spawnChildProcess = require('child_process').spawn;
     storage = require('./Node-S3/aws-s3').init(KEYS.AWS_KEY, KEYS.AWS_PASS, KEYS.S3_BUCKET);
 
@@ -17,6 +18,8 @@ function SyncVideo(in_url) {
     var args = [
         '-f',
         '18',
+        '-o',
+        '%(stitle)s-%(id)s.%(ext)s'
         in_url
     ];
     
@@ -46,7 +49,9 @@ function SyncVideo(in_url) {
         storage().put(filename, stream, {readStream: true, acl: 'public-read'}).
         
         success(function storageResponse() {
-            console.log(filename, 'stored on s3.');
+            unlinkFile(__dirname + '/' + filename, function() { 
+                console.log(filename + ' successfully synced.');
+            })
         });
     });
 }
