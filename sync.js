@@ -25,7 +25,7 @@ function SyncVideo(in_url) {
     
     var output = '';
     
-    var sync = spawnChildProcess(__dirname + '/youtube-dl/youtube-dl', [in_url]);
+    var sync = spawnChildProcess(__dirname + '/youtube-dl/youtube-dl', args);
     
     sync.stdout.on('data', function downloadingCbk(chunk) { 
         output += chunk; 
