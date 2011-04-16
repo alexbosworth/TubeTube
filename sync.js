@@ -3,7 +3,7 @@ var KEYS = require('./config/keys'),
     SyncVideo = require('./lib/syncVideo').SyncVideo,
     FindVideos = require('./lib/findVideos').FindVideos;
   
-new FindVideos(process.argv[2], function foundVideos(vids) {
+new FindVideos(process.argv[2], __dirname, function foundVideos(vids) {
     vids.forEach(function(vid) {
         new SyncVideo(storage, vid)
     });
