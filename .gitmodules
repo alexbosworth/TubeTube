@@ -1,0 +1,3 @@
+[submodule "lib/JSON2HTML"]
+	path = lib/JSON2HTML
+	url = git@github.com:Adylitica/JSON2HTML.git
