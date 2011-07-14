@@ -1,4 +1,5 @@
-var http = require('http');
+var http = require('http'),
+    crypto = require('crypto');
 
 function startHtmlResponse(res, title, buttons) {
     title = title || 'TubeTube';
@@ -11,7 +12,7 @@ function startHtmlResponse(res, title, buttons) {
     res.write('<meta name="viewport" content="width=device-width, initial-scale=1">');	
 
     // jquery mobile
-    res.write('<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0b1/jquery.mobile-1.0b1.min.css"><script src="http://code.jquery.com/jquery-1.6.1.min.js"></script><script src="http://code.jquery.com/mobile/1.0b1/jquery.mobile-1.0b1.min.js"></script>');
+    res.write('<link rel="stylesheet" href="http://code.jquery.com/mobile/latest/jquery.mobile.min.css"><script src="http://code.jquery.com/jquery-1.6.2.min.js"></script><script src="http://code.jquery.com/mobile/latest/jquery.mobile.min.js"></script>');
         
     res.write('</head><body>');
     
@@ -36,7 +37,7 @@ function finishHtmlResponse(res) {
     res.end('</div><!-- /page --></body></html>');
 }
 
-function showCasts(res) {
+function showCasts(req, res) {
     var rss = '';
     
     http.get({
@@ -65,36 +66,71 @@ function showCasts(res) {
                 if (date && date.length > 1) return dates.push(date[1]);
             });
             
-            var items = [];
+            var items = [],
+                focus = null;
             
-            dates.forEach(function(d, i) { 
-                items.push({
+            dates.forEach(function(d, i) {
+                var md5 = crypto.createHash('md5').update(links[i + 1]).digest("hex");
+                
+                var item = {
                     title: titles[i + 1],
                     link: links[i + 1],
                     desc: descs[i],
-                    date: dates[i]
-                });
+                    date: new Date(dates[i]),
+                    md5: md5
+                };
+                
+                items.push(item);
+                
+                if (req.url.substring(6) == md5) focus = item
             });
             
-            startHtmlResponse(res, 'TubeTube');
+            var title = (focus) ? focus.title : 'TubeTube';
             
-            res.write('<ul data-role="listview" data-inset="true">');
+            startHtmlResponse(res, title);
             
-            items.forEach(function(item) { 
-                res.write('<li>' + item.title + '</li>');
-            });
-            
-            res.write('</ul>');
+            if (focus) focusHtmlResponse(res, focus);
+            else itemsHtmlResponse(res, items);
 
             finishHtmlResponse(res);
         });        
     });
 }
 
+function focusHtmlResponse(res, focus) {    
+    res.write('<h2>' + focus.title + '</h2><p>' + focus.desc + '</p>');
+    
+    res.write('<form>');
+    
+    res.write('<input type="submit" value="Sync">');
+    
+    res.write('</form>');
+}
+
+function itemsHtmlResponse(res, items) {
+    res.write('<ul data-role="listview">');
+    
+    var date = null;
+    
+    items.forEach(function(item) {
+        var d = item.date.toISOString().substring(0, 10);
+        
+        if (d != date) {
+            res.write('<li data-role="list-divider">' + d + '</li>');
+        }
+        
+        date = d;
+        
+        res.write('<li><a href="/link/' + item.md5 + '"><h2>' + item.title + '</h2><p>' + item.desc + '</p></a></li>');
+    });
+    
+    res.write('</ul>');
+}
+
 function incoming(req, res) {
     var parts = req.url.split('/');
     
-    showCasts(res)    
+    showCasts(req, res);
 }
 
 http.createServer(incoming).listen(process.argv[2]);
